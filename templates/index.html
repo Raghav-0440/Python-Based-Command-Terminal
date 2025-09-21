@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 AI-Powered Python Terminal</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            color: #ffffff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid #333;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(45deg, #00d4ff, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            text-align: center;
+            color: #b3b3b3;
+            font-size: 1.1rem;
+        }
+
+        .terminal-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #1a1a1a;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid #333;
+            overflow: hidden;
+        }
+
+        .terminal-header {
+            background: #2a2a2a;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #333;
+        }
+
+        .terminal-title {
+            color: #00ff88;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .terminal-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .control-btn {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: none;
+        }
+
+        .control-btn.close { background: #ff4757; }
+        .control-btn.minimize { background: #ffa502; }
+        .control-btn.maximize { background: #00ff88; }
+
+        .output-area {
+            flex: 1;
+            background: #0a0a0a;
+            padding: 20px;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .output-line {
+            margin-bottom: 5px;
+            word-wrap: break-word;
+        }
+
+        .output-line.welcome { color: #00d4ff; font-weight: bold; }
+        .output-line.separator { color: #00ff88; }
+        .output-line.info { color: #ffffff; }
+        .output-line.command { color: #00d4ff; font-weight: bold; }
+        .output-line.conversion { color: #ff6b35; }
+        .output-line.result { color: #ffffff; }
+        .output-line.error { color: #ff4757; }
+        .output-line.goodbye { color: #8b5cf6; font-weight: bold; }
+        .output-line.empty { margin-bottom: 10px; }
+
+        .input-container {
+            background: #1a1a1a;
+            border-top: 1px solid #333;
+            padding: 20px;
+        }
+
+        .input-header {
+            background: #2a2a2a;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 8px 8px 0 0;
+            margin-bottom: 10px;
+        }
+
+        .directory-display {
+            color: #8b5cf6;
+            font-weight: bold;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+
+        .prompt {
+            color: #ff6b35;
+            font-weight: bold;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 1.2rem;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .command-input {
+            width: 100%;
+            background: #0a0a0a;
+            border: 2px solid #333;
+            border-radius: 0 0 8px 8px;
+            color: #ffffff;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 16px;
+            padding: 15px;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .command-input:focus {
+            border-color: #00d4ff;
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+        }
+
+        .status-bar {
+            background: #1a1a1a;
+            border-top: 1px solid #333;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .status-left {
+            display: flex;
+            gap: 20px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-dot.connected { background: #00ff88; }
+        .status-dot.ai { background: #00d4ff; }
+        .status-dot.processing { background: #ffa502; animation: pulse 1s infinite; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .status-text {
+            color: #b3b3b3;
+        }
+
+        .main-status {
+            color: #ffffff;
+            font-weight: bold;
+        }
+
+        /* Scrollbar styling */
+        .output-area::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .output-area::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+
+        .output-area::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+
+        .output-area::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .terminal-header {
+                padding: 10px 15px;
+            }
+            
+            .output-area {
+                padding: 15px;
+                font-size: 13px;
+            }
+            
+            .input-container {
+                padding: 15px;
+            }
+            
+            .command-input {
+                font-size: 14px;
+                padding: 12px;
+            }
+        }
+
+        /* Loading animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #333;
+            border-radius: 50%;
+            border-top-color: #00d4ff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Typing animation */
+        .typing {
+            border-right: 2px solid #00d4ff;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { border-color: #00d4ff; }
+            51%, 100% { border-color: transparent; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🚀 AI-Powered Python Terminal</h1>
+            <p>Advanced Command Interface with Natural Language Processing</p>
+        </div>
+
+        <!-- Terminal Container -->
+        <div class="terminal-container">
+            <!-- Terminal Header -->
+            <div class="terminal-header">
+                <div class="terminal-title">💻 Terminal Output</div>
+                <div class="terminal-controls">
+                    <button class="control-btn close"></button>
+                    <button class="control-btn minimize"></button>
+                    <button class="control-btn maximize"></button>
+                </div>
+            </div>
+
+            <!-- Output Area -->
+            <div class="output-area" id="outputArea">
+                <!-- Output will be dynamically added here -->
+            </div>
+
+            <!-- Input Container -->
+            <div class="input-container">
+                <div class="input-header">
+                    <div class="directory-display" id="directoryDisplay">📁 Loading...</div>
+                    <div class="prompt">$</div>
+                </div>
+                <div class="input-wrapper">
+                    <input type="text" class="command-input" id="commandInput" placeholder="Enter command or natural language..." autocomplete="off">
+                </div>
+            </div>
+
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <div class="status-left">
+                    <div class="status-item">
+                        <div class="status-dot connected"></div>
+                        <span class="status-text">🟢 Connected</span>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-dot ai" id="aiStatus"></div>
+                        <span class="status-text">🤖 AI Ready</span>
+                    </div>
+                </div>
+                <div class="main-status" id="mainStatus">Ready | Type commands or natural language</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Socket.IO connection
+        const socket = io();
+        
+        // DOM elements
+        const outputArea = document.getElementById('outputArea');
+        const commandInput = document.getElementById('commandInput');
+        const directoryDisplay = document.getElementById('directoryDisplay');
+        const aiStatus = document.getElementById('aiStatus');
+        const mainStatus = document.getElementById('mainStatus');
+        
+        // Command history
+        let commandHistory = [];
+        let historyIndex = -1;
+        
+        // Socket event handlers
+        socket.on('connect', function() {
+            console.log('Connected to server');
+            updateStatus('Connected to server', 'connected');
+        });
+        
+        socket.on('disconnect', function() {
+            console.log('Disconnected from server');
+            updateStatus('Disconnected from server', 'error');
+        });
+        
+        socket.on('output', function(data) {
+            addOutputLine(data.text, data.type);
+        });
+        
+        socket.on('directory_update', function(data) {
+            directoryDisplay.textContent = `📁 ${data.directory}`;
+        });
+        
+        socket.on('clear_screen', function() {
+            outputArea.innerHTML = '';
+        });
+        
+        // Add output line to terminal
+        function addOutputLine(text, type = 'result') {
+            const line = document.createElement('div');
+            line.className = `output-line ${type}`;
+            line.textContent = text;
+            outputArea.appendChild(line);
+            outputArea.scrollTop = outputArea.scrollHeight;
+        }
+        
+        // Update status indicators
+        function updateStatus(message, type) {
+            mainStatus.textContent = message;
+            
+            if (type === 'processing') {
+                aiStatus.className = 'status-dot processing';
+            } else if (type === 'connected') {
+                aiStatus.className = 'status-dot ai';
+            }
+        }
+        
+        // Auto-completion variables
+        let completionOptions = [];
+        let completionIndex = -1;
+        let currentInput = '';
+        
+        // Handle command input
+        commandInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                const command = commandInput.value.trim();
+                if (command) {
+                    // Add to history
+                    commandHistory.push(command);
+                    historyIndex = commandHistory.length;
+                    
+                    // Send command to server
+                    socket.emit('command', { command: command });
+                    
+                    // Clear input
+                    commandInput.value = '';
+                    
+                    // Reset completion
+                    completionOptions = [];
+                    completionIndex = -1;
+                    
+                    // Update status
+                    updateStatus('Processing command...', 'processing');
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (historyIndex > 0) {
+                    historyIndex--;
+                    commandInput.value = commandHistory[historyIndex];
+                }
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (historyIndex < commandHistory.length - 1) {
+                    historyIndex++;
+                    commandInput.value = commandHistory[historyIndex];
+                } else {
+                    historyIndex = commandHistory.length;
+                    commandInput.value = '';
+                }
+            } else if (e.key === 'Tab') {
+                e.preventDefault();
+                handleTabCompletion();
+            } else if (e.key === 'Escape') {
+                // Clear completion suggestions
+                completionOptions = [];
+                completionIndex = -1;
+                clearCompletionSuggestions();
+            }
+        });
+        
+        // Handle Tab completion
+        function handleTabCompletion() {
+            const currentText = commandInput.value;
+            const cursorPos = commandInput.selectionStart;
+            
+            // If we already have options, cycle through them
+            if (completionOptions.length > 0) {
+                if (completionOptions.length === 1) {
+                    // Single match - complete it
+                    const completion = completionOptions[0];
+                    commandInput.value = completion;
+                    commandInput.setSelectionRange(completion.length, completion.length);
+                } else {
+                    // Multiple matches - cycle through or show suggestions
+                    if (completionIndex === -1) {
+                        // First tab - show suggestions
+                        showCompletionSuggestions(currentText, completionOptions);
+                        completionIndex = 0;
+                    } else {
+                        // Cycle through options
+                        completionIndex = (completionIndex + 1) % completionOptions.length;
+                        const selectedOption = completionOptions[completionIndex];
+                        commandInput.value = selectedOption;
+                        commandInput.setSelectionRange(selectedOption.length, selectedOption.length);
+                        
+                        // Update suggestions display
+                        updateCompletionSuggestions(selectedOption);
+                    }
+                }
+            } else {
+                // Get completion options from server
+                getCompletionOptions(currentText, cursorPos);
+                
+                // Set a timeout to handle the response
+                setTimeout(() => {
+                    if (completionOptions.length > 0) {
+                        handleTabCompletion();
+                    }
+                }, 100);
+            }
+        }
+        
+        // Get completion options from server
+        function getCompletionOptions(text, cursorPos) {
+            // Request completion options from server
+            socket.emit('get_completion', {
+                text: text,
+                cursor_pos: cursorPos
+            });
+        }
+        
+        // Handle completion options from server
+        socket.on('completion_options', function(data) {
+            completionOptions = data.options || [];
+        });
+        
+        // Show completion suggestions
+        function showCompletionSuggestions(text, options) {
+            // Remove existing suggestions
+            clearCompletionSuggestions();
+            
+            if (options.length === 0) return;
+            
+            // Create suggestions container
+            const suggestionsDiv = document.createElement('div');
+            suggestionsDiv.id = 'completion-suggestions';
+            suggestionsDiv.style.cssText = `
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: #2a2a2a;
+                border: 1px solid #333;
+                border-radius: 8px;
+                max-height: 200px;
+                overflow-y: auto;
+                z-index: 1000;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            `;
+            
+            // Add suggestions
+            options.slice(0, 10).forEach((option, index) => {
+                const suggestionItem = document.createElement('div');
+                suggestionItem.style.cssText = `
+                    padding: 8px 12px;
+                    cursor: pointer;
+                    border-bottom: 1px solid #333;
+                    color: #ffffff;
+                    font-family: 'Consolas', monospace;
+                    font-size: 14px;
+                `;
+                
+                if (index === 0) {
+                    suggestionItem.style.background = '#00d4ff';
+                    suggestionItem.style.color = '#000000';
+                }
+                
+                suggestionItem.textContent = option;
+                suggestionItem.addEventListener('click', function() {
+                    commandInput.value = option;
+                    commandInput.focus();
+                    clearCompletionSuggestions();
+                });
+                
+                suggestionItem.addEventListener('mouseenter', function() {
+                    // Remove highlight from all items
+                    suggestionsDiv.querySelectorAll('div').forEach(item => {
+                        item.style.background = 'transparent';
+                        item.style.color = '#ffffff';
+                    });
+                    // Highlight current item
+                    this.style.background = '#00d4ff';
+                    this.style.color = '#000000';
+                });
+                
+                suggestionsDiv.appendChild(suggestionItem);
+            });
+            
+            if (options.length > 10) {
+                const moreItem = document.createElement('div');
+                moreItem.style.cssText = `
+                    padding: 8px 12px;
+                    color: #b3b3b3;
+                    font-style: italic;
+                    text-align: center;
+                    border-top: 1px solid #333;
+                `;
+                moreItem.textContent = `... and ${options.length - 10} more options`;
+                suggestionsDiv.appendChild(moreItem);
+            }
+            
+            // Add to input container
+            const inputWrapper = commandInput.parentElement;
+            inputWrapper.style.position = 'relative';
+            inputWrapper.appendChild(suggestionsDiv);
+        }
+        
+        // Update completion suggestions
+        function updateCompletionSuggestions(selectedOption) {
+            const suggestionsDiv = document.getElementById('completion-suggestions');
+            if (suggestionsDiv) {
+                const items = suggestionsDiv.querySelectorAll('div');
+                items.forEach((item, index) => {
+                    if (item.textContent === selectedOption) {
+                        // Remove highlight from all items
+                        items.forEach(i => {
+                            i.style.background = 'transparent';
+                            i.style.color = '#ffffff';
+                        });
+                        // Highlight selected item
+                        item.style.background = '#00d4ff';
+                        item.style.color = '#000000';
+                    }
+                });
+            }
+        }
+        
+        // Clear completion suggestions
+        function clearCompletionSuggestions() {
+            const suggestionsDiv = document.getElementById('completion-suggestions');
+            if (suggestionsDiv) {
+                suggestionsDiv.remove();
+            }
+            completionOptions = [];
+            completionIndex = -1;
+        }
+        
+        // Handle input changes
+        commandInput.addEventListener('input', function() {
+            // Clear completion when typing
+            if (completionOptions.length > 0) {
+                clearCompletionSuggestions();
+            }
+        });
+        
+        // Focus input on page load
+        window.addEventListener('load', function() {
+            commandInput.focus();
+        });
+        
+        // Auto-focus input when clicking anywhere
+        document.addEventListener('click', function() {
+            commandInput.focus();
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            outputArea.scrollTop = outputArea.scrollHeight;
+        });
+        
+        // Add some visual effects
+        setInterval(function() {
+            const statusMessages = [
+                'Ready | Type commands or natural language',
+                'AI Processing Available | Natural Language Supported',
+                'System Online | All Commands Available',
+                'Tab Completion Available | Use Tab for auto-complete',
+                'Ready | Type commands or natural language'
+            ];
+            
+            const randomMessage = statusMessages[Math.floor(Math.random() * statusMessages.length)];
+            if (mainStatus.textContent === 'Ready | Type commands or natural language') {
+                mainStatus.textContent = randomMessage;
+            }
+        }, 5000);
+    </script>
+</body>
+</html>
