@@ -26,7 +26,7 @@ from typing import List, Dict, Any, Optional
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='gevent')
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
 class WebTerminal:
     """Web Terminal with all CLI features integrated."""
