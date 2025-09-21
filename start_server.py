@@ -23,7 +23,7 @@ if __name__ == '__main__':
     # Try gunicorn first, fallback to Flask dev server
     try:
         import gunicorn.app.wsgiapp as wsgi
-        sys.argv = ['gunicorn', '--worker-class', 'eventlet', '-w', '1', 
+        sys.argv = ['gunicorn', '--worker-class', 'gevent', '-w', '1', 
                    '--bind', f'0.0.0.0:{port}', 'web_terminal:app']
         wsgi.run()
     except ImportError:
