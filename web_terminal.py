@@ -25,7 +25,7 @@ from datetime import datetime
 from typing import List, Dict, Any, Optional
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here')
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 
 class WebTerminal:
