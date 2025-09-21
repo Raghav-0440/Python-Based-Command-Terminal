@@ -25,14 +25,14 @@ from datetime import datetime
 from typing import List, Dict, Any, Optional
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-here'
-socketio = SocketIO(app, cors_allowed_origins="*")
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here')
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 
 class WebTerminal:
     """Web Terminal with all CLI features integrated."""
     
     def __init__(self):
-        self.gemini_api_key = "AIzaSyCknv4gzEzQj1ThRx8uEs_w1IqAo4dxC9c"
+        self.gemini_api_key = os.environ.get('GEMINI_API_KEY', "AIzaSyCknv4gzEzQj1ThRx8uEs_w1IqAo4dxC9c")
         self.gemini_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
         
         # Supported commands
@@ -1063,8 +1063,11 @@ if __name__ == '__main__':
     os.makedirs('templates', exist_ok=True)
     os.makedirs('static', exist_ok=True)
     
+    port = int(os.environ.get('PORT', 5000))
+    debug = os.environ.get('FLASK_ENV', 'development') == 'development'
+    
     print("🚀 Starting AI-Powered Web Terminal...")
-    print("🌐 Open your browser and go to: http://localhost:5000")
+    print(f"🌐 Open your browser and go to: http://localhost:{port}")
     print("✨ Features: Python Commands + Natural English + AI Processing")
     
-    socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+    socketio.run(app, debug=debug, host='0.0.0.0', port=port)
