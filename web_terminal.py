@@ -42,6 +42,14 @@ class WebTerminal:
         self.gemini_api_key = os.environ.get('GEMINI_API_KEY', "AIzaSyCknv4gzEzQj1ThRx8uEs_w1IqAo4dxC9c")
         self.gemini_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
         
+        # Use a guaranteed writable base directory in container
+        self.base_dir = os.environ.get('WORK_DIR', '/tmp/terminal')
+        try:
+            os.makedirs(self.base_dir, exist_ok=True)
+        except Exception:
+            # Fallback to current working directory if /tmp is not available
+            self.base_dir = os.getcwd()
+        
         # Supported commands
         self.supported_commands = {
             'dir', 'cd', 'mkdir', 'rmdir', 'del', 'copy', 'move', 'ren', 'type', 'touch',
@@ -55,7 +63,7 @@ class WebTerminal:
     def create_user_session(self, session_id):
         """Create a new user session."""
         self.user_sessions[session_id] = {
-            'current_dir': os.getcwd(),
+            'current_dir': self.base_dir,
             'command_history': [],
             'history_index': -1
         }
