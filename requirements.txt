@@ -2,8 +2,7 @@ Flask==2.3.3
 Flask-SocketIO==5.3.6
 psutil==5.9.6
 requests==2.31.0
-pathlib2==2.3.7
+six==1.17.0
 python-socketio==5.8.0
 gunicorn==21.2.0
 Werkzeug==2.3.7
-eventlet==0.34.2

@@ -345,8 +345,8 @@
     </div>
 
     <script>
-        // Initialize Socket.IO connection
-        const socket = io();
+        // Initialize Socket.IO connection (force long-polling for Python 3.13 compatibility)
+        const socket = io({ transports: ['polling'] });
         
         // DOM elements
         const outputArea = document.getElementById('outputArea');

@@ -29,9 +29,10 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-i
 socketio = SocketIO(
     app,
     cors_allowed_origins="*",
-    async_mode='eventlet',
+    async_mode='threading',
     ping_timeout=20,
     ping_interval=5,
+    transports=['polling'],
 )
 
 class WebTerminal:
